@@ -13,6 +13,7 @@ import { IWorkspaceDto } from './Clockify/WorkspaceInterfaces';
 import { ClockifyFunctions } from './Clockify/ClockifyFunctionEnum';
 import { ICurrentUserDto } from './Clockify/UserDtos';
 import { IProjectImpl } from './Clockify/ProjectInterfaces';
+import { Task, TaskRequest } from './Clockify/TaskInterfaces';
 
 export class Clockify implements INodeType {
 	description: INodeTypeDescription = {
@@ -66,7 +67,7 @@ export class Clockify implements INodeType {
 				type: 'options',
 				displayOptions: {
 					show: {
-						resource: [ ClockifyFunctions.FIND_TASKS ]
+						resource: [ ClockifyFunctions.FIND_TASKS, ClockifyFunctions.CREATE_TASK ]
 					}
 				},
 				typeOptions: { loadOptionsMethod: 'listProjects', loadOptionsDependsOn: ['workspaceId'] },
@@ -78,7 +79,19 @@ export class Clockify implements INodeType {
 				type: 'string',
 				displayOptions: {
 					show: {
-						resource: [ ClockifyFunctions.FIND_TASKS ]
+						resource: [ ClockifyFunctions.FIND_TASKS, ClockifyFunctions.CREATE_TASK ]
+					}
+				},
+				default: ''
+			},
+			{
+				displayName: 'Task Estimate',
+				name: 'taskEstimate',
+				type: 'string',
+				description: 'Format in ISO 8601 (PT2H). See https://en.wikipedia.org/wiki/ISO_8601',
+				displayOptions: {
+					show: {
+						resource: [ ClockifyFunctions.CREATE_TASK ]
 					}
 				},
 				default: ''
@@ -143,12 +156,28 @@ export class Clockify implements INodeType {
 		let body: {};
 		let method: string = 'GET';
 		let result = null;
+		let projectId: string;
+		let taskName: string;
+		let taskEstimate: string;
 
 		switch (apiResource) {
+			case ClockifyFunctions.CREATE_TASK :
+				projectId = this.getNodeParameter('projectId', 0) as string;
+				taskName  = this.getNodeParameter('taskname', 0) as string;
+				taskEstimate = this.getNodeParameter('taskEstimate', 0) as string;
+				method = 'POST';
+				resource = `/workspaces/${workspaceId}/projects/${projectId}/tasks`
+				body = <TaskRequest>{
+					name: taskName,
+					projectId: projectId,
+					estimate: taskEstimate
+				}
+				break;
+
 			case ClockifyFunctions.FIND_TASKS :
 			default:
-				const projectId  = this.getNodeParameter('projectId', 0);
-				const taskName  = this.getNodeParameter('taskname', 0);
+				projectId  = this.getNodeParameter('projectId', 0) as string;
+				taskName  = this.getNodeParameter('taskname', 0) as string;
 				resource = `/workspaces/${workspaceId}/projects/${projectId}/tasks`
 				if (taskName) {
 					qs.name = taskName
@@ -159,9 +188,9 @@ export class Clockify implements INodeType {
 		result = await clockifyApiRequest.call(this, method, resource, body, qs);
 
 		if (Array.isArray(result) && result.length !== 0) {
-			result = [this.helpers.returnJsonArray(result)];
+			return [this.helpers.returnJsonArray(result)];
 		}
 
-		return result;
+		return null;
 	}
 }
