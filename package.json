@@ -8,5 +8,8 @@
   "devDependencies": {
     "n8n-node-dev": "^0.7.0",
     "typescript": "^3.8.3"
+  },
+  "scripts": {
+    "build": "n8n-node-dev build"
   }
 }
