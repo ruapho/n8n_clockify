@@ -1,0 +1,12 @@
+{
+  "name": "n8n_clockify",
+  "version": "0.0.1",
+  "description": "A node to access the clockify api",
+  "main": "Node.clockify.ts",
+  "author": "Ivan Lukic <ruapho@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "n8n-node-dev": "^0.7.0",
+    "typescript": "^3.8.3"
+  }
+}
