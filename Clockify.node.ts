@@ -13,7 +13,7 @@ import { IWorkspaceDto } from './Clockify/WorkspaceInterfaces';
 import { ClockifyFunctions } from './Clockify/ClockifyFunctionEnum';
 import { ICurrentUserDto } from './Clockify/UserDtos';
 import { IProjectImpl } from './Clockify/ProjectInterfaces';
-import { Task, TaskRequest } from './Clockify/TaskInterfaces';
+import { Task, TaskRequest, TaskStatus } from './Clockify/TaskInterfaces';
 
 export class Clockify implements INodeType {
 	description: INodeTypeDescription = {
@@ -22,7 +22,7 @@ export class Clockify implements INodeType {
 		icon: 'file:clockify.png',
 		group: ['transform'],
 		version: 1,
-		description: 'Calls the clockify api',
+		description: 'Consumes the clockify api',
 		defaults: {
 			name: 'Clockify',
 			color: '#00FF00',
@@ -56,7 +56,11 @@ export class Clockify implements INodeType {
 					{
 						name: "Create task",
 						value: ClockifyFunctions.CREATE_TASK
-					}
+					},
+					{
+						name: "Update task",
+						value: ClockifyFunctions.UPDATE_TASK
+					},
 				],
 				required: true,
 				default: ClockifyFunctions.FIND_TASKS
@@ -67,7 +71,11 @@ export class Clockify implements INodeType {
 				type: 'options',
 				displayOptions: {
 					show: {
-						resource: [ ClockifyFunctions.FIND_TASKS, ClockifyFunctions.CREATE_TASK ]
+						resource: [ 
+							ClockifyFunctions.FIND_TASKS, 
+							ClockifyFunctions.CREATE_TASK,
+							ClockifyFunctions.UPDATE_TASK 
+						]
 					}
 				},
 				typeOptions: { loadOptionsMethod: 'listProjects', loadOptionsDependsOn: ['workspaceId'] },
@@ -79,10 +87,50 @@ export class Clockify implements INodeType {
 				type: 'string',
 				displayOptions: {
 					show: {
-						resource: [ ClockifyFunctions.FIND_TASKS, ClockifyFunctions.CREATE_TASK ]
+						resource: [ 
+							ClockifyFunctions.FIND_TASKS, 
+							ClockifyFunctions.CREATE_TASK,
+							ClockifyFunctions.UPDATE_TASK
+						 ]
 					}
 				},
 				default: ''
+			},
+			{
+				displayName: 'Task Id',
+				name: 'taskid',
+				type: 'string',
+				displayOptions: {
+					show: {
+						resource: [ 
+							ClockifyFunctions.UPDATE_TASK
+						 ]
+					}
+				},
+				default: ''
+			},
+			{
+				displayName: 'Task Status',
+				name: 'taskstatus',
+				type: 'string',
+				displayOptions: {
+					show: {
+						resource: [ 
+							ClockifyFunctions.UPDATE_TASK
+						 ]
+					}
+				},
+				options: [
+					{
+						name: "Active",
+						value: TaskStatus.ACTIVE
+					},
+					{
+						name: "Done",
+						value: TaskStatus.DONE
+					},
+				],
+				default: TaskStatus.ACTIVE
 			},
 			{
 				displayName: 'Task Estimate',
@@ -91,7 +139,10 @@ export class Clockify implements INodeType {
 				description: 'Format in ISO 8601 (PT2H). See https://en.wikipedia.org/wiki/ISO_8601',
 				displayOptions: {
 					show: {
-						resource: [ ClockifyFunctions.CREATE_TASK ]
+						resource: [ 
+							ClockifyFunctions.CREATE_TASK,
+							ClockifyFunctions.UPDATE_TASK
+						 ]
 					}
 				},
 				default: ''
@@ -157,8 +208,10 @@ export class Clockify implements INodeType {
 		let method: string = 'GET';
 		let result = null;
 		let projectId: string;
+		let taskId: string;
 		let taskName: string;
 		let taskEstimate: string;
+		let taskStatus: TaskStatus;
 
 		switch (apiResource) {
 			case ClockifyFunctions.CREATE_TASK :
@@ -174,6 +227,21 @@ export class Clockify implements INodeType {
 				}
 				break;
 
+			case ClockifyFunctions.UPDATE_TASK :
+				projectId = this.getNodeParameter('projectId', 0) as string;
+				taskId  = this.getNodeParameter('taskid', 0) as string;
+				taskName  = this.getNodeParameter('taskname', 0) as string;
+				taskEstimate = this.getNodeParameter('taskEstimate', 0) as string;
+				taskStatus = this.getNodeParameter('taskstatus', 0) as TaskStatus;
+				method = 'PUT';
+				resource = `/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}`
+				body = <TaskRequest> {
+					name: taskName,
+					estimate: taskEstimate,
+					status: taskStatus
+				}
+				break;
+
 			case ClockifyFunctions.FIND_TASKS :
 			default:
 				projectId  = this.getNodeParameter('projectId', 0) as string;
@@ -186,11 +254,14 @@ export class Clockify implements INodeType {
 		}
 
 		result = await clockifyApiRequest.call(this, method, resource, body, qs);
+		let returnItems = [];
 
 		if (Array.isArray(result) && result.length !== 0) {
-			return [this.helpers.returnJsonArray(result)];
+			returnItems = this.helpers.returnJsonArray(result);
+		} else {
+			returnItems = this.helpers.returnJsonArray([{}]);
 		}
 
-		return null;
+		return this.prepareOutputData(returnItems);
 	}
 }

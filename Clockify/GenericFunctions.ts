@@ -27,10 +27,10 @@ export async function clockifyApiRequest(this: ILoadOptionsFunctions, method: st
 		json: true
 	};
 	try {
-		console.log(`Calling ${options.uri}`)
+		console.log(`Calling ${method} ${options.uri}`)
 		return await this.helpers.request!(options);
 	} catch (error) {
-
+		console.log(error.response.body);
 		let errorMessage = error.message;
 		if (error.response.body && error.response.body.message) {
 			errorMessage = `[${error.response.body.status_code}] ${error.response.body.message}`;
