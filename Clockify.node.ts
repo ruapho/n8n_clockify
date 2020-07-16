@@ -61,6 +61,18 @@ export class Clockify implements INodeType {
 						name: "Update task",
 						value: ClockifyFunctions.UPDATE_TASK
 					},
+					{
+						name: "Find projects",
+						value: ClockifyFunctions.FIND_PROJECTS
+					},
+					{
+						name: "Create project",
+						value: ClockifyFunctions.CREATE_PROJECT
+					},
+					{
+						name: "Update project",
+						value: ClockifyFunctions.UPDATE_PROJECT
+					},
 				],
 				required: true,
 				default: ClockifyFunctions.FIND_TASKS
@@ -146,7 +158,22 @@ export class Clockify implements INodeType {
 					}
 				},
 				default: ''
-			}
+			},
+			{
+				displayName: 'Project Name',
+				name: 'projectName',
+				type: 'string',
+				displayOptions: {
+					show: {
+						resource: [ 
+							ClockifyFunctions.FIND_PROJECTS,
+							ClockifyFunctions.CREATE_PROJECT,
+							ClockifyFunctions.UPDATE_PROJECT
+						 ]
+					}
+				},
+				default: ''
+			},
 		]
 	};
 
@@ -208,12 +235,19 @@ export class Clockify implements INodeType {
 		let method: string = 'GET';
 		let result = null;
 		let projectId: string;
+		let projectName: string;
 		let taskId: string;
 		let taskName: string;
 		let taskEstimate: string;
 		let taskStatus: TaskStatus;
 
 		switch (apiResource) {
+			case ClockifyFunctions.FIND_PROJECTS:
+				projectName = encodeURI(this.getNodeParameter('projectName', 0) as string);
+				method = 'GET';
+				resource = `/workspaces/${workspaceId}/projects?name=${projectName}`
+				break;
+
 			case ClockifyFunctions.CREATE_TASK :
 				projectId = this.getNodeParameter('projectId', 0) as string;
 				taskName  = this.getNodeParameter('taskname', 0) as string;
@@ -227,7 +261,7 @@ export class Clockify implements INodeType {
 				}
 				break;
 
-			case ClockifyFunctions.UPDATE_TASK :
+			case ClockifyFunctions.UPDATE_TASK:
 				projectId = this.getNodeParameter('projectId', 0) as string;
 				taskId  = this.getNodeParameter('taskid', 0) as string;
 				taskName  = this.getNodeParameter('taskname', 0) as string;
@@ -241,7 +275,7 @@ export class Clockify implements INodeType {
 					status: taskStatus
 				}
 				break;
-
+		
 			case ClockifyFunctions.FIND_TASKS :
 			default:
 				projectId  = this.getNodeParameter('projectId', 0) as string;
