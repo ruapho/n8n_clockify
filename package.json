@@ -10,6 +10,6 @@
     "typescript": "~3.7.4"
   },
   "scripts": {
-    "build": "n8n-node-dev build --destination ./build"
+    "build": "n8n-node-dev build --destination C:/Users/ruaph/.local/n8n/custom"
   }
 }
