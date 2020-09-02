@@ -7,9 +7,9 @@
   "license": "MIT",
   "devDependencies": {
     "n8n-node-dev": "^0.9.0",
-    "typescript": "^3.9.7"
+    "typescript": "~3.7.4"
   },
   "scripts": {
-    "build": "n8n-node-dev build"
+    "build": "n8n-node-dev build --destination ./build"
   }
 }
