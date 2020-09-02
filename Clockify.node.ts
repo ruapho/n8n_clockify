@@ -73,6 +73,10 @@ export class Clockify implements INodeType {
 						name: "Update project",
 						value: ClockifyFunctions.UPDATE_PROJECT
 					},
+					{
+						name: "Find users",
+						value: ClockifyFunctions.FIND_USERS
+					},
 				],
 				required: true,
 				default: ClockifyFunctions.FIND_TASKS
@@ -174,6 +178,34 @@ export class Clockify implements INodeType {
 				},
 				default: ''
 			},
+			{
+				displayName: 'Assignee',
+				name: 'assigneeId',
+				type: 'options',
+				displayOptions: {
+					show: {
+						resource: [ 
+							ClockifyFunctions.CREATE_TASK,
+							ClockifyFunctions.UPDATE_TASK 
+						]
+					}
+				},
+				typeOptions: { loadOptionsMethod: 'listUsers', loadOptionsDependsOn: ['workspaceId'] },
+				default: ''
+			},
+			{
+				displayName: 'E-Mail',
+				name: 'email',
+				type: 'string',
+				displayOptions: {
+					show: {
+						resource: [ 
+							ClockifyFunctions.FIND_USERS,
+						 ]
+					}
+				},
+				default: ''
+			},
 		]
 	};
 
@@ -200,6 +232,24 @@ export class Clockify implements INodeType {
 					const  projects: IProjectImpl[] = await clockifyApiRequest.call(this,'GET', `workspaces/${workspaceId}/projects?archived=false`);
 					if(undefined !== projects) {
 						projects.forEach(value => {
+							rtv.push(
+							{
+								name: value.name,
+								value: value.id,
+							});
+						});
+					}
+				}
+				
+				return rtv;
+			},
+			async listUsers(this: ILoadOptionsFunctions) : Promise<INodePropertyOptions[]> {
+				const rtv : INodePropertyOptions[] = [];
+				const workspaceId = this.getCurrentNodeParameter('workspaceId')
+				if (workspaceId != null) {
+					const  users: ICurrentUserDto[] = await clockifyApiRequest.call(this,'GET', `workspaces/${workspaceId}/users?page-size=200`);
+					if(undefined !== users) {
+						users.forEach(value => {
 							rtv.push(
 							{
 								name: value.name,
@@ -240,6 +290,8 @@ export class Clockify implements INodeType {
 		let taskName: string;
 		let taskEstimate: string;
 		let taskStatus: TaskStatus;
+		let email: string;
+		let assigneeId: string;
 
 		switch (apiResource) {
 			case ClockifyFunctions.FIND_PROJECTS:
@@ -252,12 +304,14 @@ export class Clockify implements INodeType {
 				projectId = this.getNodeParameter('projectId', 0) as string;
 				taskName  = this.getNodeParameter('taskname', 0) as string;
 				taskEstimate = this.getNodeParameter('taskEstimate', 0) as string;
+				assigneeId = this.getNodeParameter('assigneeId', 0) as string;
 				method = 'POST';
 				resource = `/workspaces/${workspaceId}/projects/${projectId}/tasks`
 				body = <TaskRequest>{
 					name: taskName,
 					projectId: projectId,
-					estimate: taskEstimate
+					estimate: taskEstimate,
+					assigneeIds: [ assigneeId ]
 				}
 				break;
 
@@ -267,13 +321,20 @@ export class Clockify implements INodeType {
 				taskName  = this.getNodeParameter('taskname', 0) as string;
 				taskEstimate = this.getNodeParameter('taskEstimate', 0) as string;
 				taskStatus = this.getNodeParameter('taskstatus', 0) as TaskStatus;
+				assigneeId = this.getNodeParameter('assigneeId', 0) as string;
 				method = 'PUT';
 				resource = `/workspaces/${workspaceId}/projects/${projectId}/tasks/${taskId}`
 				body = <TaskRequest> {
 					name: taskName,
 					estimate: taskEstimate,
-					status: taskStatus
+					status: taskStatus,
+					assigneeIds: [ assigneeId ]
 				}
+				break;
+			
+			case ClockifyFunctions.FIND_USERS:
+				email = this.getNodeParameter('email', 0) as string;
+				resource = `/workspaces/${workspaceId}/users?email=${email}`
 				break;
 		
 			case ClockifyFunctions.FIND_TASKS :

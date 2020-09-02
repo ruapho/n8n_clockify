@@ -4,5 +4,6 @@ export enum ClockifyFunctions {
     UPDATE_TASK,
     FIND_PROJECTS,
     CREATE_PROJECT,
-    UPDATE_PROJECT
+    UPDATE_PROJECT,
+    FIND_USERS
 }
