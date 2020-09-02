@@ -135,5 +135,5 @@ temp/
 .pnp.*
 
 # End of https://www.toptal.com/developers/gitignore/api/yarn
-
+build/
 # End of https://www.gitignore.io/api/node,visualstudiocode
