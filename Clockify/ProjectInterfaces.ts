@@ -15,3 +15,14 @@ export interface IProjectImpl {
     public: boolean,
     workspaceId: string
 }
+
+export interface IAddProject {
+    name: string,
+    // OPTIONAL
+    clientId: string,
+    isPublic: boolean,
+    estimate: IEstimateDto,
+    color: string,
+    note: string,
+    billable: boolean
+}

@@ -12,7 +12,7 @@ import { clockifyApiRequest } from './Clockify/GenericFunctions';
 import { IWorkspaceDto } from './Clockify/WorkspaceInterfaces';
 import { ClockifyFunctions } from './Clockify/ClockifyFunctionEnum';
 import { ICurrentUserDto } from './Clockify/UserDtos';
-import { IProjectImpl } from './Clockify/ProjectInterfaces';
+import { IAddProject, IProjectImpl } from './Clockify/ProjectInterfaces';
 import { Task, TaskRequest, TaskStatus } from './Clockify/TaskInterfaces';
 
 export class Clockify implements INodeType {
@@ -336,6 +336,28 @@ export class Clockify implements INodeType {
 				email = this.getNodeParameter('email', 0) as string;
 				resource = `/workspaces/${workspaceId}/users?email=${email}`
 				break;
+
+			case ClockifyFunctions.CREATE_PROJECT:
+				projectName = this.getNodeParameter('projectName', 0) as string;
+				resource = `/workspaces/${workspaceId}/projects`
+				method = 'POST';
+				body = <IAddProject> {
+					name: projectName,
+					note: "Created via n8n.",
+					billable: false,
+					isPublic: true
+				}
+				break;
+			
+			case ClockifyFunctions.UPDATE_PROJECT:
+				throw "NOT IMPLEMENTED!"
+				break;
+
+
+			case ClockifyFunctions.FIND_USERS:
+                email = this.getNodeParameter('email', 0) as string;
+                resource = `/workspaces/${workspaceId}/users?email=${email}`;
+                break;
 		
 			case ClockifyFunctions.FIND_TASKS :
 			default:
