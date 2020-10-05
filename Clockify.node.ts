@@ -90,7 +90,8 @@ export class Clockify implements INodeType {
 						resource: [ 
 							ClockifyFunctions.FIND_TASKS, 
 							ClockifyFunctions.CREATE_TASK,
-							ClockifyFunctions.UPDATE_TASK 
+							ClockifyFunctions.UPDATE_TASK,
+							ClockifyFunctions.UPDATE_PROJECT
 						]
 					}
 				},
@@ -350,9 +351,14 @@ export class Clockify implements INodeType {
 				break;
 			
 			case ClockifyFunctions.UPDATE_PROJECT:
-				throw "NOT IMPLEMENTED!"
+				projectId = this.getNodeParameter('projectId', 0) as string;
+				projectName = this.getNodeParameter('projectName', 0) as string;
+				method = 'PUT';
+				resource = `/workspaces/${workspaceId}/projects/${projectId}`
+				body = <IAddProject> {
+					name: projectName
+				}
 				break;
-
 
 			case ClockifyFunctions.FIND_USERS:
                 email = this.getNodeParameter('email', 0) as string;
